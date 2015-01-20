@@ -81,7 +81,7 @@ def collapse_scp(tsperturn):
 	for turn, times in ts_perturn.iteritems():
 		unit = (turn[0],turn[1],turn[3])
 		counts_per_date={time[0]: time[1] for time in times}
-		if unit not in unit_ts:
+		if unit not in unit_ts.keys():
 			unit_ts[unit]=counts_per_date
 		else:
 			for time in times:
@@ -92,26 +92,29 @@ def collapse_scp(tsperturn):
 		# print unit, ts
 		for day,count in ts.iteritems():
 			daycount.append([day,count])
-		unit_ts_list[unit]=sorted(daycount)
+		unit_ts_list[unit]=daycount
 
 	return unit_ts_list
 
-def gather_ts(dailyts):
+def collapse_station(perunit):
+	perStation = defaultdict(dict)
+	perStation_list=defaultdict(list)
 
-	dailycounts = Counter()
-	weeklycounts = Counter()
+	for unit, times in perunit.iteritems():
+		station = (unit[2])
+		counts_per_date={time[0]: time[1] for time in times}
+		if station not in perStation.keys():
+			perStation[station]=counts_per_date
+		else:
+			for time in times:
+				perStation[station][time[0]]+=time[1]
 
-	for station, ts in station_ts.iteritems():
-		for date, count in ts:
-			dailycounts[date] += count
-			#isocalender returns iso year ,week date number
-			week = date.isocalendar()[1]
-			weeklycounts[week] += count
-
-	daily_full_ts = sorted(dailycounts.items())
-	weekly_full_ts = sorted(weeklycounts.items())
-	return daily_full_ts
-
+	for station,ts in perStation.iteritems():
+		daycount = []
+		for day,count in ts.iteritems():
+			daycount.append([day,count])
+		perStation_list[station]=sorted(daycount)
+	return perStation_list
 
 ################# testing with short file
 
@@ -121,8 +124,9 @@ filename = "./mta_data/short.txt"
 rawfile = read_mta_file(filename)
 ts_perturn = makedaily_ts(rawfile)
 ts_perunit = collapse_scp(ts_perturn)
+ts_perStation = collapse_station(ts_perunit)
 
-for k,v in ts_perunit.iteritems():
+for k,v in ts_perStation.iteritems():
 	print k, v
 	# for u in v:
 	# 	print u
