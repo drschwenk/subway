@@ -43,7 +43,7 @@ def makedaily_ts(rawts):
 	used as the daily count.
 	'''
 
-	print "calculating turnstile counts for " + str(len(rawts.keys())) + " turnstiles\n"
+	print "calculating daily total entries for " + str(len(rawts.keys())) + " turnstiles\n"
 	cperturn = defaultdict(list)  # This dictionary will contain a daily timeseries per turnstile
 
 	for turns,times in rawts.iteritems():
@@ -75,10 +75,12 @@ def makedaily_ts(rawts):
 	return cperturn
 
 def collapse_scp(tsperturn):
+	print "combining entry counts for" + str(len(tsperturn.keys())) + " turnstiles\n"
+
 	unit_ts = defaultdict(dict)
 	unit_ts_list = defaultdict(list)
 
-	for turn, times in ts_perturn.iteritems():
+	for turn, times in tsperturn.iteritems():
 		unit = (turn[0],turn[1],turn[3])
 		counts_per_date={time[0]: time[1] for time in times}
 		if unit not in unit_ts.keys():
@@ -97,6 +99,7 @@ def collapse_scp(tsperturn):
 	return unit_ts_list
 
 def collapse_station(perunit):
+	print "combining unit counts for " + str(len(perunit.keys())) + "  control units\n"
 	perStation = defaultdict(dict)
 	perStation_list=defaultdict(list)
 
@@ -118,7 +121,7 @@ def collapse_station(perunit):
 	return perStation_list
 
 def makeWeekly(stationTotals):
-	print "making weekly totals"
+	print "making weekly totals for " + str(len(stationTotals.keys())) + " stations\n"
 	weekly_counts = {}
 	day_offset = 5     #Mta data starts on saturday, not monday.
 	for station,ts in stationTotals.iteritems():
@@ -130,6 +133,7 @@ def makeWeekly(stationTotals):
 
 
 def combineWeeklyTotals(week_series):
+	print "making combined timeseries for  " + str(len(week_series.keys())) + " weeks\n"
 	station_total={}
 	for week in week_series:
 		for station, day in week.iteritems():
@@ -140,57 +144,4 @@ def combineWeeklyTotals(week_series):
 
 	return station_total
 
-################# testing with short file
 
-# set filename manually for testing, remove later
-filename = "./mta_data/short.txt"
-# filename = "./mta_data/mta11.txt"
-rawfile = read_mta_file(filename)
-ts_perturn = makedaily_ts(rawfile)
-ts_perunit = collapse_scp(ts_perturn)
-ts_perStation = collapse_station(ts_perunit)
-weekly_ts = makeWeekly(ts_perStation)
-
-for k,v in weekly_ts.iteritems():
-	print k, v
-	# for u in v:
-	# 	print u
-	#
-
-def producePlot(timeSeries):
-	print "plotting"
-
-	# t1=timeSeries[('R101', 'R001', '02-00-01', 'SOUTH FERRY')]
-	turn, week = timeSeries.items()[0]
-	dates = [day[0] for day in week]
-	counts = [count[1] for count in week]
-
-	pylab.plot(dates, counts)
-	return
-
-# challenge4 = producePlot(ts_perturn)
-# plt.title('Subway ridership ' u"\u2013" ' 1/1/15', fontsize=25)
-# plt.xlabel("Date", fontsize=25, labelpad=15)
-# plt.ylabel("Number of Riders", fontsize=25, labelpad=15)
-# plt.show()
-
-
-
-
-
-
-
-#attempt to use numpy array
-# def makedaily_ts(rawts):
-# 	print "calculating turnstile counts for " + str(len(rawts.keys())) + " turnstiles\n"
-# 	cperturn = defaultdict(list)  # This dictionary will contain a daily timeseries per turnstile
-#
-# 	for turn, hts in rawts.iteritems():
-# 		hts = np.array(hts).reshape(len(hts),7)
-# 		days = sorted(list(set(hts[:,2])))
-#
-# 		curday = 0
-# 		for day in days:
-# 			print hts[day][0]
-#
-# 	return cperturn
