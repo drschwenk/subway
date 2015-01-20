@@ -75,7 +75,7 @@ def makedaily_ts(rawts):
 	return cperturn
 
 def collapse_scp(tsperturn):
-	print "combining entry counts for" + str(len(tsperturn.keys())) + " turnstiles\n"
+	print "combining entry counts for " + str(len(tsperturn.keys())) + " turnstiles\n"
 
 	unit_ts = defaultdict(dict)
 	unit_ts_list = defaultdict(list)
@@ -87,7 +87,10 @@ def collapse_scp(tsperturn):
 			unit_ts[unit]=counts_per_date
 		else:
 			for time in times:
-				unit_ts[unit][time[0]]+=time[1]
+				try:
+					unit_ts[unit][time[0]]+=time[1]
+				except KeyError:
+					pass
 
 	for unit,ts in unit_ts.iteritems():
 		daycount = []
@@ -145,3 +148,10 @@ def combineWeeklyTotals(week_series):
 	return station_total
 
 
+def processing_seq(week_series):
+    rawfile = read_mta_file(week_series)
+    ts_pert = makedaily_ts(rawfile)
+    ts_perunit = collapse_scp(ts_pert)
+    ts_perStation = collapse_station(ts_perunit)
+    weekly_ts = makeWeekly(ts_perStation)
+    return weekly_ts
