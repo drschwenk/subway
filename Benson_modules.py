@@ -6,6 +6,9 @@ import dateutil.parser
 import pylab
 import numpy as np
 from collections import defaultdict, Counter
+import pylab
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def read_mta_file(filename):
@@ -24,8 +27,8 @@ def read_mta_file(filename):
 			for line in reader:
 				line[-1] = line[-1].strip()     #strip whitespace from last entry
 				ca, unit, scpm, station = line[0:4]
-				rawts = [[dateutil.parser.parse(line[6]+" " +line[7]),line[9]]]
-				mtaData[(ca, unit, scpm, station)].extend(rawts)
+				rawts = [dateutil.parser.parse(line[6]+" " +line[7]),line[9]]
+				mtaData[(ca, unit, scpm, station)].append(rawts)
 		return mtaData
 	except IOError:
 		print "File not found"
@@ -44,6 +47,7 @@ def makedaily_ts(rawts):
 	cperturn = defaultdict(list)  # This dictionary will contain a daily timeseries per turnstile
 
 	for turns,times in rawts.iteritems():
+
 		curdate = times[0][0].date()
 		dailyts=[]
 
@@ -51,19 +55,59 @@ def makedaily_ts(rawts):
 			date = times[0].date()
 			if date == curdate:
 				dailyts.append(times[1])
-				# print dailyts
 			else:
-				if int(dailyts[-1])  >  int(dailyts[0]):
+				if int(dailyts[-1])  >=  int(dailyts[0]):
 					dailycount = int(dailyts[-1]) - int(dailyts[0])
 				else:                                    # A reset has occured on this day
 					for h1,h2 in zip(dailyts,dailyts[1:]):
 						if h2<h1:                        # reset occured between h1 and h2
 							dailycount = int(dailyts[-1]) - int(h2) + int(h1) - int(dailyts[0])
+
 				dailycount = [curdate,dailycount]
-				cperturn[turns].extend(dailycount)
+				cperturn[turns].append(dailycount)
 				curdate = date
 				dailyts = [times[1]]
 	return cperturn
+
+def collapse_scp(tsperturn):
+	unit_ts = defaultdict(dict)
+	unit_ts_list = defaultdict(list)
+
+
+	for turn, times in ts_perturn.iteritems():
+		unit = (turn[0],turn[1],turn[3])
+		counts_per_date={time[0]: time[1] for time in times}
+		if unit not in unit_ts:
+			unit_ts[unit]=counts_per_date
+		else:
+			for time in times:
+				unit_ts[unit][time[0]]+=time[1]
+
+	for unit,ts in unit_ts.iteritems():
+		daycount = []
+		# print unit, ts
+		for day,count in ts.iteritems():
+			daycount.append([day,count])
+		unit_ts_list[unit]=sorted(daycount)
+
+	return unit_ts_list
+
+def gather_ts(dailyts):
+
+	dailycounts = Counter()
+	weeklycounts = Counter()
+
+	for station, ts in station_ts.iteritems():
+		for date, count in ts:
+			dailycounts[date] += count
+			#isocalender returns iso year ,week date number
+			week = date.isocalendar()[1]
+			weeklycounts[week] += count
+
+	daily_full_ts = sorted(dailycounts.items())
+	weekly_full_ts = sorted(weeklycounts.items())
+	return daily_full_ts
+
 
 ################# testing with short file
 
@@ -72,14 +116,30 @@ filename = "./mta_data/short.txt"
 # filename = "./mta_data/mta11.txt"
 rawfile = read_mta_file(filename)
 ts_perturn = makedaily_ts(rawfile)
-for k,v in ts_perturn.iteritems():
-	print k,v
+ts_perunit = collapse_scp(ts_perturn)
 
+for k,v in ts_perunit.iteritems():
+	print k, v
+	# for u in v:
+	# 	print u
+	#
 
+def producePlot(timeSeries):
+	print "plotting"
 
+	# t1=timeSeries[('R101', 'R001', '02-00-01', 'SOUTH FERRY')]
+	turn, week = timeSeries.items()[0]
+	dates = [day[0] for day in week]
+	counts = [count[1] for count in week]
 
+	pylab.plot(dates, counts)
+	return
 
-
+# challenge4 = producePlot(ts_perturn)
+# plt.title('Subway ridership ' u"\u2013" ' 1/1/15', fontsize=25)
+# plt.xlabel("Date", fontsize=25, labelpad=15)
+# plt.ylabel("Number of Riders", fontsize=25, labelpad=15)
+# plt.show()
 
 
 
