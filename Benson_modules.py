@@ -104,6 +104,7 @@ def collapse_station(perunit):
 		station = (unit[2])
 		counts_per_date={time[0]: time[1] for time in times}
 		if station not in perStation.keys():
+
 			perStation[station]=counts_per_date
 		else:
 			for time in times:
@@ -116,6 +117,29 @@ def collapse_station(perunit):
 		perStation_list[station]=sorted(daycount)
 	return perStation_list
 
+def makeWeekly(stationTotals):
+	print "making weekly totals"
+	weekly_counts = {}
+	day_offset = 5     #Mta data starts on saturday, not monday.
+	for station,ts in stationTotals.iteritems():
+		week=[[] for i in range(7)]
+		for day in ts:
+			week[day[0].weekday()-day_offset]=day[1]
+		weekly_counts[station]=week
+	return weekly_counts
+
+
+def combineWeeklyTotals(week_series):
+	station_total={}
+	for week in week_series:
+		for station, day in week.iteritems():
+			if station not in station_total:
+				station_total[station]=day
+			else:
+				station_total[station]=map(add,station_total[station],day)
+
+	return station_total
+
 ################# testing with short file
 
 # set filename manually for testing, remove later
@@ -125,8 +149,9 @@ rawfile = read_mta_file(filename)
 ts_perturn = makedaily_ts(rawfile)
 ts_perunit = collapse_scp(ts_perturn)
 ts_perStation = collapse_station(ts_perunit)
+weekly_ts = makeWeekly(ts_perStation)
 
-for k,v in ts_perStation.iteritems():
+for k,v in weekly_ts.iteritems():
 	print k, v
 	# for u in v:
 	# 	print u
