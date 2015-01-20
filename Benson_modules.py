@@ -67,12 +67,16 @@ def makedaily_ts(rawts):
 				cperturn[turns].append(dailycount)
 				curdate = date
 				dailyts = [times[1]]
+
+		dailycount = int(dailyts[-1]) - int(dailyts[0])
+		dailycount = [curdate,dailycount]
+		cperturn[turns].append(dailycount)
+
 	return cperturn
 
 def collapse_scp(tsperturn):
 	unit_ts = defaultdict(dict)
 	unit_ts_list = defaultdict(list)
-
 
 	for turn, times in ts_perturn.iteritems():
 		unit = (turn[0],turn[1],turn[3])
