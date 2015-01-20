@@ -32,18 +32,20 @@ def read_mta_file(filename):
 		return 1
 
 def makedaily_ts(rawts):
-	print "calculating turnstile counts for " + str(len(rawts.keys())) + " turnstiles\n"
+	''' Creates a total daily count per turnstile in the mta data. Among many caveats in the data are count resets.
+	The core of the function builds a list representing a daily time series for each turnstile. When a new day is
+	detected, the counts at the beginning and end of the previous day are used to compute the daily total.
+	When a reset occurs, the end of day count will not be larger, and the logic fails. When this happens, the time
+	series is inspected and the reset time time is found. The total counts on either side of the reset are summed and
+	used as the daily count.
+	'''
 
+	print "calculating turnstile counts for " + str(len(rawts.keys())) + " turnstiles\n"
 	cperturn = defaultdict(list)  # This dictionary will contain a daily timeseries per turnstile
 
 	for turns,times in rawts.iteritems():
-		# curdate = 5
 		curdate = times[0][0].date()
-		# print curdateobj
-		# cperturn[turns]= []
 		dailyts=[]
-
-
 
 		for times in times:
 			date = times[0].date()
@@ -51,32 +53,17 @@ def makedaily_ts(rawts):
 				dailyts.append(times[1])
 				# print dailyts
 			else:
-				dailycount =int(dailyts[-1]) - int(dailyts[0])
-
-				if dailycount > 0:
-					pass
-				else:
-					dailycount = 0
-
+				if int(dailyts[-1])  >  int(dailyts[0]):
+					dailycount = int(dailyts[-1]) - int(dailyts[0])
+				else:                                    # A reset has occured on this day
+					for h1,h2 in zip(dailyts,dailyts[1:]):
+						if h2<h1:                        # reset occured between h1 and h2
+							dailycount = int(dailyts[-1]) - int(h2) + int(h1) - int(dailyts[0])
 				dailycount = [curdate,dailycount]
 				cperturn[turns].extend(dailycount)
 				curdate = date
 				dailyts = [times[1]]
-
-
-
-				# 	ridercount =0
-				# dailyts=[times[1]]
-				# cperturn[turns].append([curdateobj,ridercount])
-				# curdate = times[0].date().weekday()
-				# curdateobj = times[0].date()
-		# ridercount= int(dailyts[-1]) - int(dailyts[0])
-		# curdateobj = times[0].date()
-		# cperturn[turns].append([curdateobj,ridercount])
 	return cperturn
-
-
-
 
 ################# testing with short file
 
