@@ -75,6 +75,9 @@ def makedaily_ts(rawts):
 	return cperturn
 
 def collapse_scp(tsperturn):
+	'''This function collapses the timeseries, summing counts per turnstile.
+	The core functions by converting the nested lists containing the timeseries into a dictionary
+	'''
 	print "combining entry counts for " + str(len(tsperturn.keys())) + " turnstiles\n"
 
 	unit_ts = defaultdict(dict)
