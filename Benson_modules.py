@@ -25,10 +25,13 @@ def read_mta_file(filename):
 			reader = csv.reader(inf)
 			next(reader)                # skips the first line to avoid headers
 			for line in reader:
-				line[-1] = line[-1].strip()     #strip whitespace from last entry
-				ca, unit, scpm, station = line[0:4]
-				rawts = [dateutil.parser.parse(line[6]+" " +line[7]),line[9]]
-				mtaData[(ca, unit, scpm, station)].append(rawts)
+				try:
+					line[-1] = line[-1].strip()     #strip whitespace from last entry
+					ca, unit, scpm, station = line[0:4]
+					rawts = [dateutil.parser.parse(line[6]+" " +line[7]),line[9]]
+					mtaData[(ca, unit, scpm, station)].append(rawts)
+				except IndexError:
+					pass
 		return mtaData
 	except IOError:
 		print "File not found"
